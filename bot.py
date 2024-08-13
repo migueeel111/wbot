@@ -1,16 +1,15 @@
-from telegram import Bot
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 import requests
 import asyncio
 import os
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 import time
 
 # Configura el bot de Telegram
-bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+from telegram import Bot
+bot_token = os.getenv('TELEGRAM_BOT_TOKEN')  # Utiliza variables de entorno para el token
 bot = Bot(token=bot_token)
 
 # Archivo para almacenar enlaces enviados
@@ -32,8 +31,9 @@ def guardar_enviado(enlace):
     with open(ENVIADOS_FILE, 'a') as f:
         f.write(enlace + '\n')
 
-# Función para buscar ofertas en Wallapop
-def buscar_ofertas(keyword):
+# Función para buscar ofertas en una URL de Wallapop
+def buscar_ofertas(url):
+    # Configura opciones de Chrome
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
@@ -42,11 +42,7 @@ def buscar_ofertas(keyword):
     # Configura el WebDriver
     driver = webdriver.Chrome(service=Service('/usr/local/bin/chromedriver'), options=chrome_options)
     
-    # Codifica la palabra clave
-    encoded_keyword = requests.utils.quote(keyword)
-    
-    # Construye la URL con la palabra clave codificada
-    url = f"https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=40&max_sale_price=120&keywords={encoded_keyword}&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true"
+    # Construye la URL
     print(f"Buscando en URL: {url}")  # Imprime la URL para verificar
     
     driver.get(url)
@@ -79,21 +75,33 @@ def buscar_ofertas(keyword):
             enlace = item.get_attribute('href')
             if not any(exclude_word in titulo.lower() for exclude_word in ["batería", "pantalla", "funda", "cargador", "reparación", "protectora"]):
                 ofertas.append({'titulo': titulo, 'precio': precio, 'link': enlace})
-            else:
-                print(f"Anuncio filtrado: {titulo}")
         except Exception as e:
-            print(f"Error al extraer información de un item: {e}")
-    
+            print(f"Error al extraer información del anuncio: {e}")
+
     driver.quit()
-    print(f"Se encontraron {len(ofertas)} ofertas")  # Imprime el número de ofertas encontradas
     return ofertas
 
 # Función para notificar ofertas por Telegram
 async def notificar_ofertas(chat_id):
     enviados = cargar_enviados()
-    ofertas = buscar_ofertas("iphone 11")
-    if ofertas:
-        for oferta in ofertas:
+    urls = [
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=40&max_sale_price=120&keywords=iphone%2011&filters_source=search_box&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true",
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=50&max_sale_price=150&keywords=iphone%2011%20pro&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true",
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=50&max_sale_price=170&keywords=iphone%2011%20pro%20max&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true",
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=50&max_sale_price=180&keywords=iphone%2012&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true",
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=50&max_sale_price=210&keywords=iphone%2012%20pro&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true",
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=50&max_sale_price=160&keywords=iphone%2012%20mini&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true",
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=60&max_sale_price=230&keywords=iphone%2013%20mini&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true",
+        "https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=60&max_sale_price=240&keywords=iphone%2013%20&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true"
+    ]
+    
+    todas_ofertas = []
+    for url in urls:
+        ofertas = buscar_ofertas(url)
+        todas_ofertas.extend(ofertas)
+
+    if todas_ofertas:
+        for oferta in todas_ofertas:
             if oferta['link'] not in enviados:
                 mensaje = f"{oferta['titulo']} - {oferta['precio']}\nLink: {oferta['link']}"
                 await enviar_mensaje(chat_id, mensaje)
@@ -101,7 +109,7 @@ async def notificar_ofertas(chat_id):
             else:
                 print(f"Anuncio ya enviado: {oferta['link']}")
     else:
-        await enviar_mensaje(chat_id, "No se encontraron ofertas para 'iPhone 11'.")
+        await enviar_mensaje(chat_id, "No se encontraron ofertas para los modelos de iPhone especificados.")
 
 async def main():
     chat_id = int(os.getenv('TELEGRAM_CHAT_ID'))  # Utiliza variables de entorno para el chat_id
