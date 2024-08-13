@@ -7,28 +7,33 @@ on:
 
 jobs:
   run-bot:
-    runs-on: ubuntu-latest  # Usa una máquina virtual con Ubuntu
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3  # Clona el repositorio en la máquina virtual
+      uses: actions/checkout@v3
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'  # Versión de Python a usar
+        python-version: '3.11'
 
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
         sudo apt-get update
-        sudo apt-get install -y chromium-chromedriver  # Instala el driver de Chromium
-        sudo apt-get install -y chromium  # Instala Chromium
+        sudo apt-get install -y chromium-chromedriver chromium
+        pip install -r requirements.txt
+
+    - name: Check environment
+      run: |
+        python --version
+        pip --version
+        which chromedriver
+        echo $PATH
 
     - name: Run bot
       env:
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}  # Variable de entorno para el token del bot
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}  # Variable de entorno para el ID del chat
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: |
-        python bot.py  # Asegúrate de que el nombre del archivo coincida con tu script
-
+        python bot.py
