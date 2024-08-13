@@ -3,9 +3,14 @@ import requests
 import asyncio
 import os
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+import time
 
 # Configura el bot de Telegram
-bot_token = os.getenv('TELEGRAM_BOT_TOKEN')  # Utiliza variables de entorno para el token
+bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
 bot = Bot(token=bot_token)
 
 # Archivo para almacenar enlaces enviados
@@ -29,33 +34,49 @@ def guardar_enviado(enlace):
 
 # Función para buscar ofertas en Wallapop
 def buscar_ofertas(keyword):
-    # Construye la URL
-    url = f"https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=40&max_sale_price=120&keywords={requests.utils.quote(keyword)}&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true"
-    print(f"Buscando en URL: {url}")  # Agregado para verificar la URL
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    # Configura el WebDriver
+    driver = webdriver.Chrome(service=Service('/usr/local/bin/chromedriver'), options=chrome_options)
     
+    # Codifica la palabra clave
+    encoded_keyword = requests.utils.quote(keyword)
+    
+    # Construye la URL con la palabra clave codificada
+    url = f"https://es.wallapop.com/app/search?condition=as_good_as_new,good,fair,has_given_it_all&time_filter=lastWeek&min_sale_price=40&max_sale_price=120&keywords={encoded_keyword}&filters_source=quick_filters&longitude=-3.69196&latitude=40.41956&order_by=newest&shipping=true"
+    print(f"Buscando en URL: {url}")  # Imprime la URL para verificar
+    
+    driver.get(url)
+    driver.implicitly_wait(10)
+
+    # Simula desplazamiento para cargar más anuncios
+    last_height = driver.execute_script("return document.body.scrollHeight")
+    
+    while True:
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(2)
+        new_height = driver.execute_script("return document.body.scrollHeight")
+        if new_height == last_height:
+            break
+        last_height = new_height
+
     # Extrae los elementos
     ofertas = []
-    items = soup.select('a.ItemCardList__item')
+    items = driver.find_elements(By.CSS_SELECTOR, 'a.ItemCardList__item')
+    print(f"Se encontraron {len(items)} elementos")  # Imprime el número de elementos encontrados
     
     for item in items:
         try:
-            # Título
-            titulo = item.select_one('p.ItemCard__title').text.strip()
-            
-            # Precio
+            titulo = item.find_element(By.CSS_SELECTOR, 'p.ItemCard__title').text.strip()
             try:
-                precio = item.select_one('span.ItemCard__price.ItemCard__price--bold').text.strip()
+                precio = item.find_element(By.CSS_SELECTOR, 'span.ItemCard__price.ItemCard__price--bold').text.strip()
             except Exception as e:
                 print(f"Error al extraer precio: {e}")
                 precio = 'Precio no disponible'
-            
-            # Enlace
-            enlace = item['href']
-            
-            # Filtrar anuncios no deseados
+            enlace = item.get_attribute('href')
             if not any(exclude_word in titulo.lower() for exclude_word in ["batería", "pantalla", "funda", "cargador", "reparación", "protectora"]):
                 ofertas.append({'titulo': titulo, 'precio': precio, 'link': enlace})
             else:
@@ -63,6 +84,8 @@ def buscar_ofertas(keyword):
         except Exception as e:
             print(f"Error al extraer información de un item: {e}")
     
+    driver.quit()
+    print(f"Se encontraron {len(ofertas)} ofertas")  # Imprime el número de ofertas encontradas
     return ofertas
 
 # Función para notificar ofertas por Telegram
@@ -86,3 +109,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+
