@@ -30,4 +30,4 @@ jobs:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}  # Variable de entorno para el token del bot
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}  # Variable de entorno para el ID del chat
       run: |
-        python bot.py  # Asegúrate de que el nombre del archivo coincida con tu script
+        python_bot.py  # Asegúrate de que el nombre del archivo coincida con tu script
