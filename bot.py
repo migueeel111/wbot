@@ -9,7 +9,7 @@ import os
 import time
 
 # Configura el bot de Telegram
-bot_token = 'TELEGRAM_TOKEN'
+bot_token = os.getenv('TELEGRAM_BOT_TOKEN')  # Utiliza variables de entorno para el token
 bot = Bot(token=bot_token)
 
 # Archivo para almacenar enlaces enviados
@@ -36,9 +36,11 @@ def buscar_ofertas(keyword):
     # Configura opciones de Chrome
     chrome_options = Options()
     chrome_options.add_argument("--headless")  # Ejecuta el navegador en modo headless
+    chrome_options.add_argument("--no-sandbox")  # Opciones adicionales para evitar problemas en entornos de CI/CD
+    chrome_options.add_argument("--disable-dev-shm-usage")
 
     # Configura el WebDriver
-    service = Service('D:\chromedriver-win64\chromedriver.exe')  # Ruta al archivo de chromedriver
+    service = Service('/usr/bin/chromedriver')  # Asegúrate de que la ruta sea correcta para tu entorno
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     # Construye la URL
@@ -106,7 +108,7 @@ async def notificar_ofertas(chat_id):
         await enviar_mensaje(chat_id, "No se encontraron ofertas para 'iPhone 11'.")
 
 async def main():
-    chat_id = 6384734912  # Reemplaza con tu chat_id
+    chat_id = int(os.getenv('TELEGRAM_CHAT_ID'))  # Utiliza variables de entorno para el chat_id
     await notificar_ofertas(chat_id)
 
 if __name__ == '__main__':
