@@ -31,10 +31,15 @@ async def enviar_mensaje(chat_id, texto):
 
 # Función para cargar los anuncios ya enviados
 def cargar_enviados():
-    if os.path.exists(ENVIADOS_FILE):
-        with open(ENVIADOS_FILE, 'r') as f:
-            return set(f.read().splitlines())
-    return set()
+    try:
+        if os.path.exists(ENVIADOS_FILE):
+            with open(ENVIADOS_FILE, 'r') as f:
+                return set(f.read().splitlines())
+        return set()
+    except Exception as e:
+        print(f"Error al cargar anuncios enviados: {e}")
+        return set()
+
 
 # Función para guardar nuevos anuncios enviados
 def guardar_enviado(enlace):
