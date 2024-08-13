@@ -2,7 +2,7 @@ name: Run Python Bot
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Ejecuta cada 10 minutos
+    - cron: '*/10 * * * *'  # Ejecuta diariamente a medianoche; ajusta según tus necesidades
   workflow_dispatch:  # Permite ejecutar manualmente el flujo de trabajo desde la interfaz de GitHub
   push:
     branches:
@@ -11,42 +11,50 @@ on:
 jobs:
   run-bot:
     runs-on: ubuntu-latest  # Usa una máquina virtual con Ubuntu
+  build:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
+      uses: actions/checkout@v4  # Clona el repositorio en la máquina virtual
       uses: actions/checkout@v3
 
     - name: Set up Python
+      uses: actions/setup-python@v5  # Configura Python
       uses: actions/setup-python@v4
       with:
+        python-version: '3.11'  # Versión de Python a usar
         python-version: '3.11'
 
     - name: Install dependencies
       run: |
+        pip install -r requirements.txt  # Instala dependencias desde el archivo requirements.txt
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-
+    - name: Install Chromium and ChromeDriver
     - name: Install Chrome and ChromeDriver
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget gnupg unzip
+        sudo apt-get install -y wget gnupg
         wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
         sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list'
         sudo apt-get update
         sudo apt-get install -y google-chrome-stable
-        # Get the installed Chrome version
-        CHROME_VERSION=$(google-chrome --version | sed 's/Google Chrome //')
-        # Use the correct ChromeDriver version
-        CHROMEDRIVER_VERSION=$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION%.*})
+        CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
         wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
         unzip chromedriver_linux64.zip
         sudo mv chromedriver /usr/local/bin/
         sudo chmod +x /usr/local/bin/chromedriver
-
+    - name: Run bot
+        sudo apt-get install -y chromium-browser chromium-chromedriver
+        sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
     - name: Run the bot
       env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}  # Variable de entorno para el token del bot
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}  # Variable de entorno para el ID del chat
+        DISPLAY: ':99.0'  # Configura el display para Chromium en modo headless
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        DISPLAY: ':99.0'
       run: |
-        python bot.py
+        python bot.py  # Asegúrate de que el nombre del archivo coincida con tu script
+        python bot.py cabialo en esto
