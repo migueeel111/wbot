@@ -11,22 +11,30 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4  # Usa la última versión estable de la acción checkout
+      uses: actions/checkout@v4  # Clona el repositorio en la máquina virtual
 
     - name: Set up Python
-      uses: actions/setup-python@v5  # Usa la última versión estable de setup-python
+      uses: actions/setup-python@v5  # Configura Python
       with:
-        python-version: '3.11'  # Especifica la versión de Python a usar
+        python-version: '3.11'  # Versión de Python a usar
 
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
+        pip install -r requirements.txt  # Instala dependencias desde el archivo requirements.txt
 
     - name: Install Chromium and ChromeDriver
       run: |
         sudo apt-get update
-        sudo apt-get install -y chromium-chromedriver  # Instala el driver de Chromium
-        sudo apt-get install -y chromium  # Instala Chromium
+        sudo apt-get install -y wget gnupg
+        wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list'
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+        CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
+        wget https://chromedriver.storage.googleapis.com/${CHROMEDRIVER_VERSION}/chromedriver_linux64.zip
+        unzip chromedriver_linux64.zip
+        sudo mv chromedriver /usr/local/bin/
+        sudo chmod +x /usr/local/bin/chromedriver
 
     - name: Run bot
       env:
