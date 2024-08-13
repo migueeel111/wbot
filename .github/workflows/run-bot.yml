@@ -2,8 +2,8 @@ name: Run Wallapop Bot
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Ejecuta diariamente a medianoche
-  workflow_dispatch:  # Permite ejecutar manualmente el flujo de trabajo desde GitHub
+    - cron: '0 0 * * *'  # Ejecuta diariamente a medianoche; ajusta según tus necesidades
+  workflow_dispatch:  # Permite ejecutar manualmente el flujo de trabajo desde la interfaz de GitHub
 
 jobs:
   run-bot:
@@ -11,10 +11,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3  # Clona el repositorio en la máquina virtual
+      uses: actions/checkout@v4  # Actualiza a la última versión disponible (si existe)
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5  # Actualiza a la última versión disponible (si existe)
       with:
         python-version: '3.11'  # Versión de Python a usar
 
@@ -28,4 +28,3 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}  # Variable de entorno para el ID del chat
       run: |
         python bot.py  # Asegúrate de que el nombre del archivo coincida con tu script
-
