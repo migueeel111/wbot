@@ -6,9 +6,9 @@ import requests
 import asyncio
 import os
 import time
+from telegram import Bot, error
 
 # Configura el bot de Telegram
-from telegram import Bot
 bot_token = os.getenv('TELEGRAM_BOT_TOKEN')  # Utiliza variables de entorno para el token
 bot = Bot(token=bot_token)
 
@@ -17,7 +17,17 @@ ENVIADOS_FILE = 'anuncios_enviados.txt'
 
 # Función para enviar mensajes por Telegram
 async def enviar_mensaje(chat_id, texto):
-    await bot.send_message(chat_id=chat_id, text=texto)
+    while True:
+        try:
+            await bot.send_message(chat_id=chat_id, text=texto)
+            await asyncio.sleep(2)  # Retraso de 2 segundos entre mensajes
+            break
+        except error.RetryAfter as e:
+            print(f"Rate limit exceeded. Waiting for {e.retry_after} seconds.")
+            await asyncio.sleep(e.retry_after)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            break
 
 # Función para cargar los anuncios ya enviados
 def cargar_enviados():
@@ -117,4 +127,5 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+
 
