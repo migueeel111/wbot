@@ -2,38 +2,30 @@ name: Run Wallapop Bot
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Ejecuta diariamente a medianoche; ajusta según tus necesidades
-  workflow_dispatch:  # Permite ejecutar manualmente el flujo de trabajo desde la interfaz de GitHub
+    - cron: '0 0 * * *'  # Ejecuta diariamente a medianoche
+  workflow_dispatch:  # Permite ejecutar manualmente el flujo de trabajo desde GitHub
 
 jobs:
   run-bot:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Usa una máquina virtual con Ubuntu
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3  # Clona el repositorio en la máquina virtual
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.11'  # Versión de Python a usar
 
     - name: Install dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y chromium-chromedriver chromium
         pip install -r requirements.txt
-
-    - name: Check environment
-      run: |
-        python --version
-        pip --version
-        which chromedriver
-        echo $PATH
 
     - name: Run bot
       env:
-        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}  # Variable de entorno para el token del bot
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}  # Variable de entorno para el ID del chat
       run: |
-        python bot.py
+        python bot.py  # Asegúrate de que el nombre del archivo coincida con tu script
+
