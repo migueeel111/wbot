@@ -9,7 +9,7 @@ import os
 import time
 
 # Configura el bot de Telegram
-bot_token = 'TU_BOT_TOKEN_AQUI'
+bot_token = 'TELEGRAM_TOKEN'
 bot = Bot(token=bot_token)
 
 # Archivo para almacenar enlaces enviados
