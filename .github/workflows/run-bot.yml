@@ -1,9 +1,8 @@
 name: Run Python Bot
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: '*/30 * * * *'  # Esto ejecuta el bot cada 30 minutos
 
 jobs:
   build:
