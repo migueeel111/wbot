@@ -43,3 +43,4 @@ jobs:
         DISPLAY: ':99.0'  # Configura el display para Chromium en modo headless
       run: |
         python bot.py  # Asegúrate de que el nombre del archivo coincida con tu script
+
