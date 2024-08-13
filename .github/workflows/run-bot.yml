@@ -1,8 +1,7 @@
-name: Run Python Bot
-
 on:
-  schedule:
-    - cron: '*/30 * * * *'  # Esto ejecuta el bot cada 30 minutos
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -32,6 +31,8 @@ jobs:
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: |
+        python bot.py
       run: |
         python bot.py
 
